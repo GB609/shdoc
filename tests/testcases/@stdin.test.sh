@@ -44,15 +44,15 @@ Tests for shdoc processing of @stdin keyword.
 
 * [test-stdin](#test-stdin)
 
-### test-stdin
+## test-stdin
 
 test-stdin dummy function.
 
-#### Exit codes
+### Exit codes
 
 * **0**: Exit code section appears before stdin section.
 
-#### Input on stdin
+### Input on stdin
 
 * simple one line message.
 * one line message with indentation and trailing spaces.
@@ -62,15 +62,15 @@ test-stdin dummy function.
   with trailing spaces
   and random indentation.
 
-#### Output on stdout
+### Output on stdout
 
 * Stdout section appears after stdin section.
 
-#### Output on stderr
+### Output on stderr
 
 * Error output description.
 
-#### See also
+### See also
 
 * [see-also-after-stderr-section](#see-also-after-stderr-section)
 

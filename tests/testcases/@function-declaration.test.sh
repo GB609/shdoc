@@ -66,35 +66,35 @@ with some more lines
 * [g](#g)
 * [h](#h)
 
-### a
+## a
 
 Function n°1
 
-### b
+## b
 
 Function n°2
 
-### :c
+## :c
 
 Function n°3
 
-### d-method
+## d-method
 
 Function n°4
 
-### e:function
+## e:function
 
 Function n°5
 
-### f
+## f
 
 Function n°6
 
-### g
+## g
 
 Function n°7
 
-### h
+## h
 
 Function n°8
 

@@ -43,15 +43,15 @@ Tests for shdoc processing of @stdout keyword.
 
 * [test-stdout](#test-stdout)
 
-### test-stdout
+## test-stdout
 
 test-stdout dummy function.
 
-#### Input on stdin
+### Input on stdin
 
 * Input stream description.
 
-#### Output on stdout
+### Output on stdout
 
 * simple one line message.
 * one line message with indentation and trailing spaces.
@@ -61,11 +61,11 @@ test-stdout dummy function.
   with trailing spaces
   and random indentation.
 
-#### Output on stderr
+### Output on stderr
 
 * Error output description.
 
-#### See also
+### See also
 
 * [see-also-after-stderr-section](#see-also-after-stderr-section)
 

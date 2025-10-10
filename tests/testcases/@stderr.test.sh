@@ -55,15 +55,15 @@ Tests for shdoc processing of @stderr keyword.
 
 * [test-stderr](#test-stderr)
 
-### test-stderr
+## test-stderr
 
 test-stderr dummy function.
 
-#### Output on stdout
+### Output on stdout
 
 * section should appear before stderr section.
 
-#### Output on stderr
+### Output on stderr
 
 * Standard stderr message.
 * Stderr message with [markdown link](https://github.com/reconquest/shdoc).
@@ -75,7 +75,7 @@ test-stderr dummy function.
   stderr message
 * Stderr message with trailing spaces.
 
-#### See also
+### See also
 
 * [see-also-after-stderr-section](#see-also-after-stderr-section)
 
