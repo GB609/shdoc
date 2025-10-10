@@ -225,8 +225,8 @@ If an option argument is expected, it must be specified between `<` and `>`
 ```bash
 # @description Says hi to a given person.
 # @option -h A short option.
-# @arg --value=<value> A long option with argument.
-# @arg -v<value> | --value <value> A long option with short option alternative.
+# @option --value=<value> A long option with argument.
+# @option -v<value> | --value <value> A long option with short option alternative.
 say-hello() {
     ...
 }
