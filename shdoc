@@ -240,7 +240,12 @@ function unindent(text) {
 function reset() {
     debug("→ reset()")
 
-    delete docblock
+    # Make sure the variable exists before deleting. 
+    # Without this, shdoc will fail for fully unannotated scripts.
+    # This might happen when batch-handling a list of files
+    if (typeof(docblock) != "unassigned"){
+        delete docblock
+    }
     description = ""
 }
 
