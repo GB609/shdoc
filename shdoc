@@ -110,6 +110,11 @@ function process_function(text) {
     }
 
     debug("→ function")
+    if (internal_section){
+        debug("→ → function: contained in internal section, skip")
+        return
+    }
+
     if (is_internal) {
         debug("→ → function: it is internal, skip")
         is_internal = 0
@@ -242,7 +247,6 @@ function reset() {
 function reset_section() {
     debug("→ reset_section()")
     
-    delete section_docblock
     delete docblock_filter
     section = ""
     section_description = ""
@@ -475,6 +479,13 @@ function process_section() {
         debug("→ → no valid section name - skip")
         return;
     }
+    if (is_internal){
+        debug("→ → section marked as internal - skip")
+        internal_section = 1
+        is_internal = 0
+        reset_section();
+        return;
+    }
 
     debug("→ → section: [" section "]")
     debug("→ → section_description: [" section_description "]")
@@ -658,7 +669,12 @@ function debug(msg) {
 
 /^[[:space:]]*# @internal/ {
     debug("→ @internal")
-    is_internal = 1
+    # ignore the flag while we are in an internal section
+    # to prevent dangling values not reset by function blocks
+    # because internal_section is checked first in process_function
+    if (!internal_section){
+        is_internal = 1
+    }
 
     next
 }
@@ -713,6 +729,7 @@ in_description {
   section_description = ""
   section_active = 0
   function_nesting = 2
+  internal_section = 0
 
   next
 }
@@ -720,6 +737,9 @@ in_description {
 /^[[:space:]]*# @section/ {
   debug("→ @section")
   sub(/^[[:space:]]*# @section /, "")
+  if (internal_section){
+      internal_section = 0
+  }
   section = $0
   section_active = 1
   function_nesting = 3
@@ -729,9 +749,7 @@ in_description {
 
 /^[[:space:]]*# @example/ {
     debug("→ @example")
-
     in_example = 1
-
 
     next
 }

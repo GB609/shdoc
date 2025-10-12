@@ -426,10 +426,9 @@ say-hello-world() {
 
 ### `@internal`
 
-When you want to skip documentation generation for a particular function, you can specify this
-`@internal` tag.
-It allows you to have the same style of doc comments across the script and keep internal
-functions hidden from users.
+When you want to skip documentation generation for a particular function, you can specify this `@internal` tag.
+When used in `@section` blocks, all functions until the next `@endsection` or `@section` will be considered internal.  
+It allows you to have the same style of doc comments across the script and keep internal functions hidden from users.
 
 **Example**
 
