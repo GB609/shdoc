@@ -277,7 +277,7 @@ function handle_description() {
         return;
     }
 
-    if (file_title != "" && file_description == "") {
+    if (file_intro_enabled != 0 && file_description == "") {
         debug("→ → file description: added")
         file_description = description
         description = ""
