@@ -686,7 +686,8 @@ function debug(msg) {
 
 /^[[:space:]]*# @(name|file)/ {
     debug("→ @name|@file")
-    sub(/^[[:space:]]*# @(name|file) /, "")
+    sub(/^[[:space:]]*# @(name|file)[[:space:]]*/, "")
+    file_intro_enabled = 1
     file_title = $0
 
     next
@@ -984,8 +985,10 @@ END {
     debug("→ → file_description: [" file_description "]")
     debug("→ END }")
 
-    if (file_title != "") {
-        print render("h1", file_title)
+    if (file_intro_enabled) {
+        if (file_title != "") {
+            print render("h1", file_title)
+        }
 
         if (file_brief != "") {
             print file_brief "\n" 
