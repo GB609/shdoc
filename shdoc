@@ -277,9 +277,13 @@ function handle_description() {
         return;
     }
 
-    if (file_intro_enabled != 0 && file_description == "") {
+    if (file_intro_enabled != 0 && file_description == "" && in_file_block == 0) {
         debug("→ → file description: added")
-        file_description = description
+        # support a subset of additional annotations for @file sections.
+        docblock_filter["example"] = 1
+        docblock_filter["see"] = 1
+        docblock_filter["set"] = 1
+        file_description = file_description render_docblock("", description, docblock, 1)
         description = ""
         return;
     }
@@ -536,7 +540,9 @@ function render_docblock(func_name, description, docblock, nesting) {
     nesting_one = "h" (nesting + 1);
     nesting_two = "h" (nesting + 2);
 
-    lines[0] = render(nesting_top, func_name)
+    if (func_name) {
+      lines[0] = render(nesting_top, func_name)
+    }
 
     if (description != "") {
         push(lines, description)
@@ -689,6 +695,7 @@ function debug(msg) {
     sub(/^[[:space:]]*# @(name|file)[[:space:]]*/, "")
     file_intro_enabled = 1
     file_title = $0
+    in_file_block = 1
 
     next
 }
@@ -961,6 +968,7 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
     # this is not a function declaration.
     function_declaration = ""
     function_declaration_complete = 0
+    in_file_block = 0
 
     # Add current (section) description to output.
     handle_description();
