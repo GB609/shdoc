@@ -268,7 +268,7 @@ When `@section` is used, shdoc can not by itself detect the end of a section. It
 This annotation can be used to disable the grouping again for the following functions. It has no effect on its own. Captions for functions contained in sections are level 3 (`###`), 
 ungrouped functions are level 2 (`##`).
 
-**original**
+**original:**  
 In the original, there is no terminated for `@section` and no adjustment of header levels depending on section nesting. There, all functions are always level 3, sections are level 2 and section descriptions
 are inserted in-between. So there is no visible distinction between function descriptions contained in a section and others not contained. In fact, once a `@section` was specified, everything following it 
 appears as if it is contained in that.
