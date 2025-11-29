@@ -285,6 +285,7 @@ function handle_description() {
         docblock_filter["set"] = 1
         file_description = file_description render_docblock("", description, docblock, 1)
         description = ""
+        delete docblock_filter
         return;
     }
 }
@@ -813,10 +814,10 @@ in_example {
 
     # Test if @arg is a numbered item (or $@).
     if(match(arg_text, /^\$([0-9]+|@)[[:space:]]/, contents)) {
-        debug(" → → found arg $" arg_number)
-
         # Fetch matched values.
         arg_number = contents[1]
+        
+        debug(" → → found arg $" arg_number)
 
         # Zero pad argument number for sorting.
         if(arg_number ~ /[0-9]+/){
