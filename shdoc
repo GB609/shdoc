@@ -337,28 +337,22 @@ function docblock_concat(key, value) {
 # @param value          Added item value.
 #
 # @set docblock[docblock_name] docblock with value added as its last item.
-function docblock_push(key, value, target) {
-    if (!isarray(target)) {
-        docblock_push(key, value, docblock)
-        return
-    }
-    new_item_index = length(target[key])
+function docblock_push(key, value) {
+    new_item_index = length(docblock[key])
     # Reinitialize docblock key value if it is empty to allow for array storage.
-    if(new_item_index == 0)
-    {
-        delete target[key]
+    if(new_item_index == 0) {
+        delete docblock[key]
     }
-    if(isarray(value))
-    {
+    if(isarray(value)) {
 
         # Value is an array. Add its contents key by key to the docblock.
         # Note that is only allow for single dimension value array.
         for (i in value) {
-            target[key][new_item_index][i] = value[i]
+            docblock[key][new_item_index][i] = value[i]
         }
     }
     else {
-        target[key][new_item_index] = value
+        docblock[key][new_item_index] = value
     }
 }
 
@@ -975,8 +969,9 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
 /^[^#]*$/ {
     debug("→ break")
     
-    if(file_intro_enabled && in_file_block && length(docblock)){
+    if(file_intro_enabled && in_file_block && isarray(docblock) && length(docblock)){
         # support a subset of additional annotations for @file sections.
+        debug("handle file docblock")
         docblock_filter["example"] = 1
         docblock_filter["see"] = 1
         docblock_filter["set"] = 1
