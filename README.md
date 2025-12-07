@@ -8,12 +8,19 @@ This fork adds a few features and bugfixes to the upstream at [reconquest/shdoc]
 
 ## Index
 
+* [Usage](#usage)
 * [Example](#example)
 * [Annotations](#features)
-* [Usage](#usage)
 * [Installation](#installation)
-* [More examples](#examples)
 * [License](#license)
+
+## Usage
+
+shdoc has no args and expects a shell script with comments on stdin and will produce markdown as stdout.
+
+```bash
+$ shdoc < your-shell-script.sh > doc.md
+```
 
 ## Example
 
@@ -468,13 +475,24 @@ show-msg() {
 }
 ```
 
-## Usage
+## Advanced features
 
-shdoc has no args and expects a shell script with comments on stdin and will produce markdown as stdout.
+### Parameter support
 
-```bash
-$ shdoc < your-shell-script.sh > doc.md
-```
+**fork-specific**
+
+`shdoc` can perform simple parameter replacement. It will recognize replacment tags in the form `%%<varname>%%` and 
+try to retrieve the value of an equally-named environment variable `<varname>`. If any value is found, the entire tag
+is replaced. The tag is left untouched otherwise.
+
+**Rules:**
+- Only tags in comment blocks are recognized (lines starting with `[[:space:]]*#`).
+- Tag replacement happens first, before any other processing is done. This allows to place annotations in tags.
+- Multiple tags can be replaced per line, but they will not be resolved recursively.
+- `<varname>` must be a valid name for a shell environment variable, consisting of `[a-Z0-9-_]+`.
+- `shdoc` does not perform any parameter expansion.
+- There is no way to 'mask' or 'quote' a tag, if it matches the form above.
+- Example blocks or sections fenced in backticks or quotes are neither recognized, not treated specially.
 
 ## Installation
 
@@ -498,14 +516,7 @@ sudo make install
 
 ### Others
 
-Unfortunately, there are no packages of shdoc for other distros, but we're looking for contributions.
-
-## Examples
-
-See example documentation on:
-
-* [tests.sh](https://github.com/reconquest/tests.sh/blob/master/REFERENCE.md)
-* [coproc.bash](https://github.com/reconquest/coproc.bash/blob/master/REFERENCE.md)
+There are no packages of shdoc for other distros.
 
 # LICENSE
 

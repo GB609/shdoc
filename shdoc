@@ -679,6 +679,21 @@ function debug(msg) {
     debug("line: [" $0 "]")
 }
 
+/^[[:space:]]*#.*?%%[a-zA-Z0-9_\-]+%%.*/ {
+    debug("→ found placeholders")
+    splitted[0] = ""
+    patsplit($0, splitted, /%%([a-zA-Z0-9_\-]+?)%%/)
+
+    for(i in splitted) {
+        env_name = splitted[i]
+        gsub(/%%/, "", env_name)
+        if (ENVIRON[env_name] != ""){
+            debug("→ → replace [" splitted[i] "] with " ENVIRON[env_name])
+            gsub(splitted[i], ENVIRON[env_name])
+        }
+    }
+}
+
 /^[[:space:]]*# @internal/ {
     debug("→ @internal")
     # ignore the flag while we are in an internal section
@@ -727,10 +742,10 @@ in_description {
 
         handle_description()
     } else {
-        debug("→ → in_description: concat")
         sub(/^[[:space:]]*# @description[[:space:]]*/, "")
         sub(/^[[:space:]]*#[[:space:]]*/, "")
         sub(/^[[:space:]]*#$/, "")
+        debug("→ → in_description: concat [" $0 "]")
 
         description = concat(description, $0)
         next
@@ -1005,7 +1020,7 @@ END {
 
         if (file_description != "") {
             print render("h2", "Overview")
-            print file_description "\n" 
+            print file_description
         }
     }
 
