@@ -279,13 +279,8 @@ function handle_description() {
 
     if (file_intro_enabled != 0 && file_description == "" && in_file_block == 0) {
         debug("→ → file description: added")
-        # support a subset of additional annotations for @file sections.
-        docblock_filter["example"] = 1
-        docblock_filter["see"] = 1
-        docblock_filter["set"] = 1
-        file_description = file_description render_docblock("", description, docblock, 1)
+        file_description = description 
         description = ""
-        delete docblock_filter
         return;
     }
 }
@@ -979,6 +974,15 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr)[[:blank:]]+(.*[^[:
 # Handle non comment lines.
 /^[^#]*$/ {
     debug("→ break")
+    
+    if(file_intro_enabled && in_file_block && length(docblock)){
+        # support a subset of additional annotations for @file sections.
+        docblock_filter["example"] = 1
+        docblock_filter["see"] = 1
+        docblock_filter["set"] = 1
+        file_annoblock = render_docblock("", "", docblock, 1)
+        delete docblock_filter
+    }
 
     # Line is not an opening bracket,
     # this is not a function declaration.
@@ -1020,7 +1024,11 @@ END {
 
         if (file_description != "") {
             print render("h2", "Overview")
-            print file_description
+            print file_description "\n"
+        }
+        
+        if (file_annoblock != "") {
+            print file_annoblock
         }
     }
 
