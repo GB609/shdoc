@@ -24,6 +24,7 @@ tests:put input <<EOF
 # @name shdoc @stderr tests
 # @brief Test @stderr functionnality.
 # @description Tests for shdoc processing of @stderr keyword.
+
 # @description test-stderr dummy function.
 # @stderr Standard stderr message.
 # @stdout section should appear before stderr section.

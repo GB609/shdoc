@@ -14,6 +14,7 @@ tests:put input <<EOF
 # @name shdoc @stdin tests
 # @brief Test @stdin functionnality.
 # @description Tests for shdoc processing of @stdin keyword.
+
 # @description test-stdin dummy function.
 # @see see-also-after-stderr-section
 # @stdin simple one line message.

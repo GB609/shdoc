@@ -197,6 +197,11 @@ Back up again
 A name of the project, used as a title of the doc. Can be specified once in the beginning of the
 file.
 
+**Note:**  
+A comment block linked to `@name` or `@file` must be followed by at least one none-comment line 
+after its `@description` and other annotations, or it will not be recognized correctly.
+correctly.
+
 **Example**
 
 ```bash
@@ -243,7 +248,7 @@ function super() {
 The name of a section of the file. Can be used to group functions. Creates a paragraph titled with the section name.  
 All functions following this annotation will be placed as sub-paragraphs of the given section.
 Use again to start the next section or `@endsection` to break out of the current section.  
-`@section` blocks need to be followed by a none-comment none-EOF line to be printed.
+`@section` blocks need to be followed by at least one none-comment none-EOF line to be printed.
 
 **fork-specific**
 - The sections will also appear in the TOC.
