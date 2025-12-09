@@ -724,20 +724,46 @@ function debug(msg) {
 }
 
 in_description {
-    if (/^[^[[:space:]]*#]|^[[:space:]]*# @[^d]|^[[:space:]]*[^#]|^[[:space:]]*$/) {
-        debug("→ → in_description: leave")
+    switch($0) {
+        case /^[^[[:space:]]*#]|^[[:space:]]*# @[^d]|^[[:space:]]*[^#]|^[[:space:]]*$/:
+            debug("→ → in_description: leave")
+            in_description = 0
+            handle_description()
+            break
 
-        in_description = 0
+        case /^[[:space:]]*#[[:space:]]+[~~~+|```+].*$/:
+            debug("→ → in_description: fenced block [" $0 "]")
+            match($0, /~~~+|```+/)
+            cur_fence = substr($0, RSTART, RLENGTH)
+            sub(/^[[:space:]]*# /, "")
+            description = concat(description, $0)
+            if (fenced_block == "") { 
+                debug("→ → → start")
+                fenced_block = cur_fence
+            } else if (fenced_block == cur_fence) {
+                debug("→ → → end")
+                fenced_block = ""
+            } else {
+                debug("→ → → inner fence - ignore")
+            }
+            cur_fence = ""
+            next
+            break
 
-        handle_description()
-    } else {
-        sub(/^[[:space:]]*# @description[[:space:]]*/, "")
-        sub(/^[[:space:]]*#[[:space:]]*/, "")
-        sub(/^[[:space:]]*#$/, "")
-        debug("→ → in_description: concat [" $0 "]")
+        default:
+            sub(/^[[:space:]]*# @description[[:space:]]*/, "")
+            # only remove surplus spaces when not in a fenced block
+            if (fenced_block == "") {
+                sub(/^[[:space:]]*#[[:space:]]*/, "")
+                sub(/^[[:space:]]*#$/, "")
+            } else {
+                sub(/^[[:space:]]*# /, "")
+            }
+            debug("→ → in_description: concat [" $0 "]")
 
-        description = concat(description, $0)
-        next
+            description = concat(description, $0)
+            next
+            break
     }
 }
 
