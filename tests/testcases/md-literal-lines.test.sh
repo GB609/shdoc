@@ -91,9 +91,9 @@ The literal marker '#|' has rudimentary detection for tables.
 the pipe from the literal marker `#|` will not be stripped.
 
 Table with slight indention
-| | literal | table |
-| |  :---:  | :---: |
-| | keep?   | yes   |
+ | literal | table |
+ |  :---:  | :---: |
+ | keep?   | yes   |
 
 Indented, but not in literal mode
 | literal | table |
@@ -101,14 +101,14 @@ Indented, but not in literal mode
 | keep?   | yes   |
 
 Directly at line start
-|| literal | table |
-||  :---:  | :---: |
-|| keep?   | yes   |
-
-Without duplicate left pipes
 | literal | table |
 |  :---:  | :---: |
 | keep?   | yes   |
+
+Without duplicate left pipes
+ literal | table |
+  :---:  | :---: |
+ keep?   | yes   |
 
 EOF
 
