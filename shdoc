@@ -730,12 +730,16 @@ in_description {
         in_description = 0
 
         handle_description()
+    } else if (match($0, /^[[:space:]]*#\|/)) {
+        debug("→ → in_description: literal [" $0 "] (keep spaces)")
+        sub(/^[[:space:]]*#\|/, "")
+        description = concat(description, $0)
+        next
     } else {
         sub(/^[[:space:]]*# @description[[:space:]]*/, "")
         sub(/^[[:space:]]*#[[:space:]]*/, "")
         sub(/^[[:space:]]*#$/, "")
         debug("→ → in_description: concat [" $0 "]")
-
         description = concat(description, $0)
         next
     }
@@ -743,6 +747,7 @@ in_description {
 
 /^[[:space:]]*# @endsection/ {
   debug("→ @endsection")
+  process_section()
   section = ""
   section_description = ""
   section_active = 0

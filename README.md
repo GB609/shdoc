@@ -477,6 +477,93 @@ show-msg() {
 
 ## Advanced features
 
+### Literal md source
+
+By default, `shdoc` performs whitespace trimming at the start of a comment line while it builds description blocks.  
+This behavior disables the possibility to use formatting options like code blocks by indentation (4 spaces), or use 
+pre-formatted (and indented) text within fenced code blocks (`~~~` or ` ``` `).
+
+It is possible to disable the trimming behavior by using `#|` as comment prefix, instead of just `# ` (as for annotations). 
+`shdoc` will only consume the beginning of the line matching the regex `[ ]*#|` and leave the rest untouched.  
+**Exception:** There is a simple detection if the line contains a table row definition (when it also ends with `|[ ]*`). 
+In that case, only `[ ]*#` at the beginning will be consumed and the pipe will be left untouched.
+
+**Examples**
+
+- Simple
+<table>
+ <tr>
+  <th>Input</th>
+  <th>Result</th>
+ </tr>
+  <tr>
+  <td>
+   
+```bash
+# @description Simple
+#| This is kept literally...
+#|                       ... this too
+#        me too... not.
+```
+
+  </td>
+  <td>
+   
+```md
+Simple
+ This is kept literally...
+                       ... this too
+me too... not.
+```
+
+  </td>
+ </tr>
+</table>
+
+- Tables  
+**Note:** In MD itself, there is little reason to indenting a table. Instead, indenting it too far would convert the table into a code block instead,
+where the table source code is not processed as MD.  
+The literal md marker does not perform any extra checks to find out wether the pipe contained in `#|` is part of the table or not. The pipe character
+connected to the comment hash will be stripped. As a consequence, writing tables requires a space between `#` and the left beginning `|` for regular
+tables. Alternatively, if the table code should really be indented, 2 pipes must be used, with spaces in between.
+
+<table>
+  <tr>
+    <th>Input</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td>
+   
+```bash
+# @description Table
+#| co1 | co2 |
+#      | abc | def |
+#| | 123 | 456 |
+#|     | 123 | 456 |
+```
+
+  </td>
+  <td>
+
+```md
+Table
+ co1 | co2 |
+| abc | def |
+ | 123 | 456 |
+     | 123 | 456 |
+```
+
+  </td>
+</tr>
+</table>
+
+
+Takeaway: 
+1. If (for optical reasons only) you want to indent a table, don't use `#|`.
+2. For regular tables, keep at least one space between `#` and `|` at the beginning of the line
+3. Indenting table source requires `#|`, followed by the desired amount of spaces, then `|` to start the table row.
+
 ### Parameter support
 
 **fork-specific**
