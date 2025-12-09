@@ -731,13 +731,8 @@ in_description {
 
         handle_description()
     } else if (match($0, /^[[:space:]]*#\|/)) {
-        sub(/^[[:space:]]*#/, "")
-        if (match($0, /^\|.*\|[[:space:]]*$/)){
-            debug("→ → in_description: table row [" $0 "] (ignore |)")
-        } else {
-            sub(/^\|/, "")
-            debug("→ → in_description: literal [" $0 "] (keep spaces)")
-        }
+        debug("→ → in_description: literal [" $0 "] (keep spaces)")
+        sub(/^[[:space:]]*#\|/, "")
         description = concat(description, $0)
         next
     } else {
