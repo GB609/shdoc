@@ -477,7 +477,11 @@ show-msg() {
 
 ## Advanced features
 
-### Literal md source
+**fork-specific**
+
+This section describes advanced features and capabilities which are not necessarily needed for simple function documentation.
+
+### Literal MD source lines
 
 By default, `shdoc` performs whitespace trimming at the start of a comment line while it builds description blocks.  
 This behavior disables the possibility to use formatting options like code blocks by indentation (4 spaces), or use 
@@ -565,16 +569,18 @@ Takeaway:
 
 ### Parameter support
 
-**fork-specific**
-
-`shdoc` can perform simple parameter replacement. It will recognize replacment tags in the form `%%<varname>%%` and 
+`shdoc` can perform simple parameter replacement. It will recognize replacement tags in the form `%%<varname>%%` and 
 try to retrieve the value of an equally-named environment variable `<varname>`. If any value is found, the entire tag
 is replaced. The tag is left untouched otherwise.
+
+This allows the documentation source comments to work like a simple template
 
 **Rules:**
 - Only tags in comment blocks are recognized (lines starting with `[[:space:]]*#`).
 - Tag replacement happens first, before any other processing is done. This allows to place annotations in tags.
-- Multiple tags can be replaced per line, but they will not be resolved recursively.
+- Multiple tags can be replaced per line (identical and different ones), but they will not be resolved recursively.  
+  **Exception:** Tags are looped over in the order of definition. When the content of the first tag resolves to a
+  subsequent tag name, then this subsequent tag will be replaced in a later iteration.
 - `<varname>` must be a valid name for a shell environment variable, consisting of `[a-Z0-9-_]+`.
 - `shdoc` does not perform any parameter expansion.
 - There is no way to 'mask' or 'quote' a tag, if it matches the form above.
