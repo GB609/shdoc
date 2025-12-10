@@ -485,8 +485,7 @@ pre-formatted (and indented) text within fenced code blocks (`~~~` or ` ``` `).
 
 It is possible to disable the trimming behavior by using `#|` as comment prefix, instead of just `# ` (as for annotations). 
 `shdoc` will only consume the beginning of the line matching the regex `[ ]*#|` and leave the rest untouched.  
-**Exception:** There is a simple detection if the line contains a table row definition (when it also ends with `|[ ]*`). 
-In that case, only `[ ]*#` at the beginning will be consumed and the pipe will be left untouched.
+**Note:** This behaviour has implications for lines where tables are declared.
 
 **Examples**
 
