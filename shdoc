@@ -683,7 +683,7 @@ function debug(msg) {
     sub(/^[[:space:]]+#/, "#")
 }
 
-match($0, /^#([[:space:]][[:space:]]+)@.*/, trimmed_spaces) {
+match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
     debug("→ normalize space between '#' and '@'")
     multiline_min_indent = trimmed_spaces[1]
     debug("→ → keep [" $multiline_min_indent "] for multiline indent handling")
