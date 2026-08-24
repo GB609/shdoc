@@ -170,9 +170,7 @@ function render_toc_link(text) {
         # Enclose URLs in markdown links.
         text = gensub(/([^\]]([^a-z(]|\())([a-z]+:\/\/[-[:alnum:]+&@#\/%?=~_|!:,.;]*[-[:alnum:]\+&@#\/%=~_|])/, "\\1[\\3](\\3)", "g", text)
         # Trim spaces added to ease unenclosed URL regex creation.
-        gsub(/^[[:blank:]]*/, "", text)
-        gsub(/[[:blank:]]*$/, "", text)
-        return text
+        return trim(text)
     }
 
     # If title contains a markdown link, return as is.
@@ -666,7 +664,6 @@ function render_docblock(func_name, description, docblock, nesting) {
         push(lines, "")
     }
 
-
     result = join(lines)
     return result
 }
@@ -722,7 +719,7 @@ match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
     debug("→ @name|@file")
     sub(/^# @(name|file)[[:space:]]*/, "")
     file_intro_enabled = 1
-    file_title = $0
+    file_title = trim($0)
     in_file_block = 1
 
     next
@@ -731,7 +728,7 @@ match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
 /^# @brief/ {
     debug("→ @brief")
     sub(/^# @brief /, "")
-    file_brief = $0
+    file_brief = trim($0)
 
     next
 }
@@ -786,7 +783,7 @@ in_description {
   if (internal_section){
       internal_section = 0
   }
-  section = $0
+  section = trim($0)
   section_active = 1
   function_nesting = 3
 
@@ -815,12 +812,12 @@ in_example {
 }
 
 # Select @option lines with content.
-/^[[:blank:]]*#[[:blank:]]+@option[[:blank:]]+[^[:blank:]]/ {
+/^# @option[[:blank:]]+[^[:blank:]]/ {
     debug("→ @option")
     option_text = $0
 
     # Remove '# @option ' tag.
-    sub(/^[[:blank:]]*#[[:blank:]]+@option[[:blank:]]+/, "", option_text)
+    sub(/^# @option[[:blank:]]+/, "", option_text)
 
     # Trim text.
     option_text = trim(option_text)
@@ -833,13 +830,13 @@ in_example {
 }
 
 # Select @arg lines with content.
-/^[[:blank:]]*#[[:blank:]]+@arg[[:blank:]]+[^[:blank:]]/ {
+/^# @arg[[:blank:]]+[^[:blank:]]/ {
     debug("→ @arg")
     
     arg_text = $0
 
     # Remove '# @arg ' tag.
-    sub(/^[[:blank:]]*#[[:blank:]]+@arg[[:blank:]]+/, "", arg_text)
+    sub(/^# @arg[[:blank:]]+/, "", arg_text)
 
     # Trim text.
     arg_text = trim(arg_text)
@@ -883,30 +880,13 @@ in_example {
     next
 }
 
-/^# @set/ {
-    debug("→ @set")
-    sub(/^# @set /, "")
+# handles all annotations which can appear multiple times and only have simple one-line values
+match($0, /^# @(set|exitcode|see)[[:blank:]]+(.*)/, matched_annotation) {
+    real_anno = matched_annotation[1]
+    anno_value = matched_annotation[2]
+    debug("→ @" real_anno)
 
-    docblock_push("set", $0)
-
-    next
-}
-
-/^# @exitcode/ {
-    debug("→ @exitcode")
-    sub(/^# @exitcode /, "")
-
-    docblock_push("exitcode", $0)
-
-    next
-}
-
-/^# @see/ {
-    debug("→ @see")
-    sub(/[[:space:]]*# @see /, "")
-
-    docblock_push("see", $0)
-
+    docblock_push(real_anno, trim(anno_value))
     next
 }
 
@@ -924,7 +904,7 @@ in_example {
 # for it to be a multiple lines docblock item.
 multiple_line_docblock_name {
     # Check if current line indentation does match the previous line docblock item.
-    if ($0 ~ multiple_line_identation_regex ) {
+    if ($0 ~ multiple_line_identation_regex) {
         debug("→ @" multiple_line_docblock_name " - new line")
         
         # Current line has the same indentation as the stderr section.
