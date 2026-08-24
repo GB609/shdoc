@@ -827,7 +827,7 @@ in_example {
 # Select @arg lines with content.
 /^# @arg[[:blank:]]+[^[:blank:]]/ {
     debug("→ @arg")
-    
+
     arg_text = $0
 
     # Remove '# @arg ' tag.
@@ -889,7 +889,7 @@ match($0, /^# @(set|exitcode|see)[[:blank:]]+(.*)/, matched_annotation) {
     debug("→ @deprecated")
     sub(/[[:space:]]*# @deprecated /, "")
 
-    deprecated = $0
+    deprecated = trim($0)
 
     next
 }
@@ -901,9 +901,8 @@ multiple_line_docblock_name {
     # Check if current line indentation does match the previous line docblock item.
     if ($0 ~ multiple_line_identation_regex) {
         debug("→ @" multiple_line_docblock_name " - new line")
-        
+
         # Current line has the same indentation as the stderr section.
-    
         # Remove indentation and trailing spaces.
         sub(/^#[[:space:]]+/, "")
         sub(/[[:space:]]+$/, "")
@@ -921,10 +920,10 @@ multiple_line_docblock_name {
 
 # Process similarly @stdin, @stdout, @stderr and @requires entries.
 # Allow for multiple lines entries.
-match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.*[^[:blank:]])[[:blank:]]*$/, contents) {
+match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.+)$/, contents) {
     # Fetch matched values.
     docblock_name = contents[1]
-    text = contents[2]
+    text = trim(contents[2])
 
     debug("→ @" docblock_name)
 
@@ -937,7 +936,6 @@ match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.*[^[:blank:]])[[:blan
     # the comment starting '#' and be 
     multiple_line_identation_regex = "#" multiline_min_indent "[[:blank:]]+[^[:blank:]].*$"
 
-    # Stop processing current line, and process next line.
     next
 }
 
