@@ -497,7 +497,7 @@ function process_section() {
 
 function docblock_allows(key, docblock) {
     debug("→ → check docblock filter for: [" key "]")
-    if (!key in docblock) {
+    if (key in docblock == 0) {
       debug("→ → → [" key "] not in docblock")
       return 0
     }
