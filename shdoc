@@ -495,8 +495,12 @@ function process_section() {
     reset_section();
 }
 
-function docblock_allows(key) {
+function docblock_allows(key, docblock) {
     debug("→ → check docblock filter for: [" key "]")
+    if (!key in docblock) {
+      debug("→ → → [" key "] not in docblock")
+      return 0
+    }
     if (!isarray(docblock_filter) || length(docblock_filter) == 0) {
         debug("→ → → no filters defined")
         return 1
@@ -543,7 +547,7 @@ function render_docblock(func_name, description, docblock, nesting) {
     
     filter_active = isarray(docblock_filter)
 
-    if (docblock_allows("example") && "example" in docblock) {
+    if (docblock_allows("example", docblock)) {
         push(lines, render(nesting_one, "Example"))
         push(lines, render("code", "bash"))
         push(lines, unindent(docblock["example"]))
@@ -554,7 +558,7 @@ function render_docblock(func_name, description, docblock, nesting) {
     if ("option" in docblock || "option-bad" in docblock) {
         push(lines, render(nesting_one, "Options"))
 
-        if (docblock_allows("option") && "option" in docblock) {
+        if (docblock_allows("option", docblock)) {
             for (i in docblock["option"]) {
                 # Add strong around options, but exclude pipes.
                 term = render("strong", docblock["option"][i]["term"])
@@ -571,7 +575,7 @@ function render_docblock(func_name, description, docblock, nesting) {
             }
         }
 
-        if (docblock_allows("option-bad") && "option-bad" in docblock) {
+        if (docblock_allows("option-bad", docblock)) {
             for (i in docblock["option-bad"]) {
                 item = render("li", docblock["option-bad"][i])
                 push(lines, item)
@@ -582,7 +586,7 @@ function render_docblock(func_name, description, docblock, nesting) {
         }
     }
 
-    if (docblock_allows("arg") && "arg" in docblock) {
+    if (docblock_allows("arg", docblock)) {
         push(lines, render(nesting_one, "Arguments"))
 
         # Sort args by indexes (i.e. by argument number.)
@@ -601,14 +605,14 @@ function render_docblock(func_name, description, docblock, nesting) {
         push(lines, "")
     }
 
-    if (docblock_allows("noargs") && "noargs" in docblock) {
+    if (docblock_allows("noargs", docblock)) {
         push(lines, render("i", "Function has no arguments."))
 
         # Add empty line to signal end of list in markdown.
         push(lines, "")
     }
 
-    if (docblock_allows("set") && "set" in docblock) {
+    if (docblock_allows("set", docblock)) {
         push(lines, render(nesting_one, "Variables set"))
         for (i in docblock["set"]) {
             item = docblock["set"][i]
@@ -621,7 +625,7 @@ function render_docblock(func_name, description, docblock, nesting) {
         push(lines, "")
     }
 
-    if (docblock_allows("exitcode") && "exitcode" in docblock) {
+    if (docblock_allows("exitcode", docblock)) {
         push(lines, render(nesting_one, "Exit codes"))
         for (i in docblock["exitcode"]) {
             item = render("li", render("exitcode", docblock["exitcode"][i]))
@@ -632,23 +636,23 @@ function render_docblock(func_name, description, docblock, nesting) {
         push(lines, "")
     }
 
-    if (docblock_allows("stdin") && "stdin" in docblock) {
+    if (docblock_allows("stdin", docblock)) {
         render_docblock_list(docblock, "stdin", "Input on stdin", nesting_one)
     }
 
-    if (docblock_allows("stdout") && "stdout" in docblock) {
+    if (docblock_allows("stdout", docblock)) {
         render_docblock_list(docblock, "stdout", "Output on stdout", nesting_one)
     }
 
-    if (docblock_allows("stderr") && "stderr" in docblock) {
+    if (docblock_allows("stderr", docblock)) {
         render_docblock_list(docblock, "stderr", "Output on stderr", nesting_one)
     }
 
-    if (docblock_allows("requires") && "requires" in docblock) {
+    if (docblock_allows("requires", docblock)) {
         render_docblock_list(docblock, "requires", "Requires", nesting_one)
     }
 
-    if (docblock_allows("see") && "see" in docblock) {
+    if (docblock_allows("see", docblock)) {
         push(lines, render(nesting_one, "See also"))
         for (i in docblock["see"]) {
             item = render("li", render_toc_link(docblock["see"][i]))
