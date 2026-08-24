@@ -280,12 +280,9 @@ function handle_description() {
 
 function concat(x, text) {
     if (x == "") {
-        x = text
-    } else {
-        x = x "\n" text
+        return text
     }
-
-    return x
+    return x "\n" text
 }
 
 function push(arr, value) {
@@ -293,12 +290,12 @@ function push(arr, value) {
 }
 
 function join(arr) {
-    if (length(lines) == 0) {
+    if (length(arr) == 0) {
         return ""
     }
-    result = lines[0]
-    for (i = 1; i < length(lines); i++) {
-        result = result "\n" lines[i]
+    result = arr[0]
+    for (i = 1; i < length(arr); i++) {
+        result = result "\n" arr[i]
     }
 
     return result
