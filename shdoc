@@ -679,9 +679,19 @@ function debug(msg) {
 
 {
     debug("line: [" $0 "]")
+    # strip any leading spaces
+    sub(/^[[:space:]]+#/, "#")
 }
 
-/^[[:space:]]*#.*?%%[a-zA-Z0-9_\-]+%%.*/ {
+match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
+    debug("→ normalize space between '#' and '@'")
+    multiline_min_indent = trimmed_spaces[1]
+    debug("→ → keep [" $multiline_min_indent "] for multiline indent handling")
+    sub(/^#[[:space:]]+@/, "# @")
+    debug("→ → result line: [" $0 "]")
+}
+
+/^#.*?%%[a-zA-Z0-9_\-]+%%.*/ {
     debug("→ found placeholders")
     splitted[0] = ""
     patsplit($0, splitted, /%%([a-zA-Z0-9_\-]+?)%%/)
@@ -696,7 +706,7 @@ function debug(msg) {
     }
 }
 
-/^[[:space:]]*# @internal/ {
+/^# @internal/ {
     debug("→ @internal")
     # ignore the flag while we are in an internal section
     # to prevent dangling values not reset by function blocks
@@ -708,9 +718,9 @@ function debug(msg) {
     next
 }
 
-/^[[:space:]]*# @(name|file)/ {
+/^# @(name|file)/ {
     debug("→ @name|@file")
-    sub(/^[[:space:]]*# @(name|file)[[:space:]]*/, "")
+    sub(/^# @(name|file)[[:space:]]*/, "")
     file_intro_enabled = 1
     file_title = $0
     in_file_block = 1
@@ -718,15 +728,15 @@ function debug(msg) {
     next
 }
 
-/^[[:space:]]*# @brief/ {
+/^# @brief/ {
     debug("→ @brief")
-    sub(/^[[:space:]]*# @brief /, "")
+    sub(/^# @brief /, "")
     file_brief = $0
 
     next
 }
 
-/^[[:space:]]*# @description/ {
+/^# @description/ {
     debug("→ @description")
     in_description = 1
     in_example = 0
@@ -738,27 +748,27 @@ function debug(msg) {
 }
 
 in_description {
-    if (/^[^[[:space:]]*#]|^[[:space:]]*# @[a-z]+|^[[:space:]]*[^#]|^[[:space:]]*$/) {
+    if (/^[^#]|^# @[a-z]+|^[[:space:]]*[^#]|^[[:space:]]*$/) {
         debug("→ → in_description: leave")
 
         in_description = 0
 
         handle_description()
-    } else if (match($0, /^[[:space:]]*#\|/)) {
+    } else if (match($0, /^#\|/)) {
         debug("→ → in_description: literal [" $0 "] (keep spaces)")
-        sub(/^[[:space:]]*#\|/, "")
+        sub(/^#\|/, "")
         description = concat(description, $0)
         next
     } else {
-        sub(/^[[:space:]]*#[[:space:]]*/, "")
-        sub(/^[[:space:]]*#$/, "")
+        sub(/^#[[:space:]]*/, "")
+        sub(/^#$/, "")
         debug("→ → in_description: concat [" $0 "]")
         description = concat(description, $0)
         next
     }
 }
 
-/^[[:space:]]*# @endsection/ {
+/^# @endsection/ {
   debug("→ @endsection")
   process_section()
   section = ""
@@ -770,9 +780,9 @@ in_description {
   next
 }
 
-/^[[:space:]]*# @section/ {
+/^# @section/ {
   debug("→ @section")
-  sub(/^[[:space:]]*# @section /, "")
+  sub(/^# @section /, "")
   if (internal_section){
       internal_section = 0
   }
@@ -783,7 +793,7 @@ in_description {
   next
 }
 
-/^[[:space:]]*# @example/ {
+/^# @example/ {
     debug("→ @example")
     in_example = 1
 
@@ -791,12 +801,12 @@ in_description {
 }
 
 in_example {
-    if (! /^[[:space:]]*#[ ]{1,}/) {
+    if (! /^#[ ]{1,}/) {
         debug("→ → in_example: leave")
         in_example = 0
     } else {
         debug("→ → in_example: concat")
-        sub(/^[[:space:]]*#/, "")
+        sub(/^#/, "")
 
         docblock_concat("example", $0)
         next
@@ -864,8 +874,8 @@ in_example {
     next
 }
 
-# Select @noargs line with no additionnal text.
-/^[[:space:]]*#[[:blank:]]+@noargs[[:blank:]]*$/ {
+# Select @noargs line with no additional text.
+/^# @noargs[[:blank:]]*$/ {
     debug("→ @noargs")
     docblock["noargs"] = 1
 
@@ -873,25 +883,25 @@ in_example {
     next
 }
 
-/^[[:space:]]*# @set/ {
+/^# @set/ {
     debug("→ @set")
-    sub(/^[[:space:]]*# @set /, "")
+    sub(/^# @set /, "")
 
     docblock_push("set", $0)
 
     next
 }
 
-/^[[:space:]]*# @exitcode/ {
+/^# @exitcode/ {
     debug("→ @exitcode")
-    sub(/^[[:space:]]*# @exitcode /, "")
+    sub(/^# @exitcode /, "")
 
     docblock_push("exitcode", $0)
 
     next
 }
 
-/^[[:space:]]*# @see/ {
+/^# @see/ {
     debug("→ @see")
     sub(/[[:space:]]*# @see /, "")
 
@@ -900,7 +910,7 @@ in_example {
     next
 }
 
-/^[[:space:]]*# @deprecated/ {
+/^# @deprecated/ {
     debug("→ @deprecated")
     sub(/[[:space:]]*# @deprecated /, "")
 
@@ -920,7 +930,7 @@ multiple_line_docblock_name {
         # Current line has the same indentation as the stderr section.
     
         # Remove indentation and trailing spaces.
-        sub(/^[[:space:]]*#[[:space:]]+/, "")
+        sub(/^#[[:space:]]+/, "")
         sub(/[[:space:]]+$/, "")
 
         # Push matched message to corresponding docblock.
@@ -936,11 +946,10 @@ multiple_line_docblock_name {
 
 # Process similarly @stdin, @stdout, @stderr and @requires entries.
 # Allow for multiple lines entries.
-match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr|requires)[[:blank:]]+(.*[^[:blank:]])[[:blank:]]*$/, contents) {
+match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.*[^[:blank:]])[[:blank:]]*$/, contents) {
     # Fetch matched values.
-    indentation = contents[1]
-    docblock_name = contents[2]
-    text = contents[3]
+    docblock_name = contents[1]
+    text = contents[2]
 
     debug("→ @" docblock_name)
 
@@ -949,7 +958,9 @@ match($0, /^([[:blank:]]*#[[:blank:]]+)@(stdin|stdout|stderr|requires)[[:blank:]
 
     # Signal the start of a multiple line section.
     multiple_line_docblock_name = docblock_name
-    multiple_line_identation_regex = "^" indentation "[[:blank:]]+[^[:blank:]].*$"
+    # since lines are normalized to start with '#' or '# @', indentation of multilines must happen AFTER
+    # the comment starting '#' and be 
+    multiple_line_identation_regex = "#" multiline_min_indent "[[:blank:]]+[^[:blank:]].*$"
 
     # Stop processing current line, and process next line.
     next
