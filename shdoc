@@ -221,7 +221,7 @@ function unindent(text) {
     }
 
     # Remove the minimum level of indentation and join text_lines
-    result = text_lines[start]
+    result = substr(text_lines[start], min_indent + 1)
     for (i = start + 1; i < length(text_lines); i++) {
         text_lines[i] = substr(text_lines[i], min_indent + 1)
         result = result "\n" text_lines[i]
