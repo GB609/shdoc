@@ -198,38 +198,33 @@ function render_toc_item(title, nesting_level) {
 function unindent(text) {
     split(text, text_lines, "\n")
 
-    # find a maximum level indent as a starting point
-    # find a first non empty line
-    start = 0
-    max_indent = 0
+    start = -1
+    min_indent = 100
+    # First iteration: find first none-empty line and update min_indent on the go
     for (i = 0; i < length(text_lines); i++) {
-        if (text_lines[i] != "" && start == 0) {
+        if(text_lines[i] == "") {
+            continue
+        }
+        if (start < 0) {
             start = i
         }
 
         match(text_lines[i], /^[ ]*/)
-        if (RLENGTH > max_indent) {
-            max_indent = RLENGTH
+        if (RLENGTH < min_indent) {
+            min_indent = RLENGTH
         }
     }
 
-    # find a minimum level of indentation
-    indent = max_indent
-    for (i = start; i < length(text_lines); i++) {
-        match(text_lines[i], /^[ ]*/)
-        if (RLENGTH < indent) {
-            indent = RLENGTH
-        }
+    # There is no text at all - it's all empty lines.
+    if (start < 0) {
+      return ""
     }
 
-    # remove the minimum level of indentation and join text_lines
-    for (i = start; i < length(text_lines); i++) {
-        text_lines[i] = substr(text_lines[i], indent + 1)
-        if (i == start) {
-            result = text_lines[i]
-        } else {
-            result = result "\n" text_lines[i]
-        }
+    # Remove the minimum level of indentation and join text_lines
+    result = text_lines[start]
+    for (i = start + 1; i < length(text_lines); i++) {
+        text_lines[i] = substr(text_lines[i], min_indent + 1)
+        result = result "\n" text_lines[i]
     }
 
     return result
@@ -298,12 +293,12 @@ function push(arr, value) {
 }
 
 function join(arr) {
-    for (i = 0; i < length(lines); i++) {
-        if (i == 0) {
-            result = lines[i]
-        } else {
-            result = result "\n" lines[i]
-        }
+    if (length(lines) == 0) {
+        return ""
+    }
+    result = lines[0]
+    for (i = 1; i < length(lines); i++) {
+        result = result "\n" lines[i]
     }
 
     return result
