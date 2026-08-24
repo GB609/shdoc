@@ -679,6 +679,14 @@ function debug(msg) {
 
 {
     debug("line: [" $0 "]")
+    # strip any leading spaces
+    sub(/^[[:space:]]+#/, "#")
+}
+
+/^#[[:space:]][[:space:]]+@.*/ {
+    debug("→ normalize space between '#' and '@'")
+    sub(/^#[[:space:]]+@/, "# @")
+    debug("→ → result line: [" $0 "]")
 }
 
 /^[[:space:]]*#.*?%%[a-zA-Z0-9_\-]+%%.*/ {
