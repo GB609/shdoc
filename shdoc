@@ -683,8 +683,10 @@ function debug(msg) {
     sub(/^[[:space:]]+#/, "#")
 }
 
-/^#[[:space:]][[:space:]]+@.*/ {
+match($0, /^#([[:space:]][[:space:]]+)@.*/, trimmed_spaces) {
     debug("→ normalize space between '#' and '@'")
+    multiline_min_indent = trimmed_spaces[1]
+    debug("→ → keep [" $multiline_min_indent "] for multiline indent handling")
     sub(/^#[[:space:]]+@/, "# @")
     debug("→ → result line: [" $0 "]")
 }
@@ -946,9 +948,8 @@ multiple_line_docblock_name {
 # Allow for multiple lines entries.
 match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.*[^[:blank:]])[[:blank:]]*$/, contents) {
     # Fetch matched values.
-    indentation = contents[1]
-    docblock_name = contents[2]
-    text = contents[3]
+    docblock_name = contents[1]
+    text = contents[2]
 
     debug("→ @" docblock_name)
 
@@ -957,7 +958,9 @@ match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.*[^[:blank:]])[[:blan
 
     # Signal the start of a multiple line section.
     multiple_line_docblock_name = docblock_name
-    multiple_line_identation_regex = "^" indentation "[[:blank:]]+[^[:blank:]].*$"
+    # since lines are normalized to start with '#' or '# @', indentation of multilines must happen AFTER
+    # the comment starting '#' and be 
+    multiple_line_identation_regex = "#" multiline_min_indent "[[:blank:]]+[^[:blank:]].*$"
 
     # Stop processing current line, and process next line.
     next
