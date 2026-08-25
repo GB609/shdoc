@@ -914,9 +914,12 @@ match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.+)$/, contents) {
 # ----- START: none-comment evaluations ----- #
 
 /^[[:blank:]]+[^#]/ {
-  sub(/^[[:blank:]]+/, "")
-  # normalize spaces - this strips tabs for readability of patterns against code lines below
-  gensub(/[[:blank:]]+/, " ", "G")
+    sub(/^[[:blank:]]+/, "")
+}
+{
+    # normalize spaces - this strips tabs for readability of patterns against code lines below
+    # must always happen
+    $0 = gensub(/[[:blank:]]+/, " ", "G")
 }
 
 # either a line in the form 'name()' or 'function name ...
