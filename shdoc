@@ -706,7 +706,7 @@ match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
 }
 
 /^# @(name|file)/ {
-    strip_anno("(name|@file)")
+    strip_anno("(name|file)")
     file_intro_enabled = 1
     file_title = trim($0)
     in_file_block = 1
