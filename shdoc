@@ -86,6 +86,13 @@ function warn(message) {
         warn_message_color, NR, message, color_clear) > "/dev/stderr"
 }
 
+# @description Print a debug statement when `ENVIRON["SHDOC_DEBUG"]` is set to 1
+function debug(msg) {
+    if (debug_enable) {
+        print "DEBUG: " msg > debug_file
+    }
+}
+
 # @description Process a line of text as a function declaration.
 #   This is a function called when encountering a function declaration,
 #   or a line starting by a opening bracket `{` with a previous line matching
@@ -98,14 +105,9 @@ function warn(message) {
 # @set func_name Set the function name.
 # @set doc Add function documentation to doc output.
 # @set toc Add link to function documentation to table of contents.
-function process_function(text) {
-    if ( \
-        (length(docblock) == 0 && description == "") \
-        || in_example \
-    ) {
-        # If docblock and description are empty,
-        # or if function in example section,
-        # skip function declaration.
+function process_function(func_name) {
+    if (length(docblock) == 0 && description == "") {
+        # Skip declaration when it has no data (no annotions and description)
         return
     }
 
@@ -120,15 +122,7 @@ function process_function(text) {
         is_internal = 0
     } else {
         debug("→ → function: register")
-
         is_internal = 0
-
-        func_name = gensub(\
-            /^[[:blank:]]*(function([[:blank:]])+)?([a-zA-Z0-9_\-:-\\.]+)[[:blank:]]*.*/, \
-            "\\3", \
-            "g", \
-            text \
-        )
 
         # Add function documentation to output.
         doc = concat(doc, render_docblock(func_name, description, docblock, function_nesting))
@@ -140,17 +134,13 @@ function process_function(text) {
     # Reset variables to allow for another function documentation processing.
     reset()
 
-    # Process next line.
     next
 }
 
 function render(type, text) {
-    return gensub( \
-        styles[style, type, "from"],
-        styles[style, type, "to"],
-        "g",
-        text \
-    )
+    from = styles[style, type, "from"]
+    to = styles[style, type, "to"]
+    return gensub(from, to, "G", text)
 }
 
 function render_toc_link(text) {
@@ -244,7 +234,7 @@ function reset() {
 
 function reset_section() {
     debug("→ reset_section()")
-    
+
     delete docblock_filter
     section = ""
     section_description = ""
@@ -532,24 +522,21 @@ function render_docblock(func_name, description, docblock, nesting) {
         debug("→ DEPRECATED")
 
         deprecatedText = render("strong", "DEPRECATED")
-        push(lines, deprecatedText " " deprecated)
-        push(lines, "")
+        push(lines, deprecatedText " " deprecated "\n")
     }
 
     if (description != "") {
-        push(lines, description)
-        # Add empty line to signal end of description.
-        push(lines, "")
+        # Add description PLUS empty line to signal end of description.
+        push(lines, description "\n")
     }
-    
+
     filter_active = isarray(docblock_filter)
 
     if (docblock_allows("example", docblock)) {
         push(lines, render(nesting_one, "Example"))
         push(lines, render("code", "bash"))
         push(lines, unindent(docblock["example"]))
-        push(lines, render("/code"))
-        push(lines, "")
+        push(lines, render("/code") "\n")
     }
 
     if ("option" in docblock || "option-bad" in docblock) {
@@ -603,10 +590,8 @@ function render_docblock(func_name, description, docblock, nesting) {
     }
 
     if (docblock_allows("noargs", docblock)) {
-        push(lines, render("i", "Function has no arguments."))
-
-        # Add empty line to signal end of list in markdown.
-        push(lines, "")
+        # Add noargs remark and follow it up with an empty line
+        push(lines, render("i", "Function has no arguments.") "\n")
     }
 
     if (docblock_allows("set", docblock)) {
@@ -664,10 +649,19 @@ function render_docblock(func_name, description, docblock, nesting) {
     return result
 }
 
-function debug(msg) {
-    if (debug_enable) {
-        print "DEBUG: " msg > debug_file
-    }
+# @description Debug out and remove leading '# @name' from current line (+ one optional space)
+# Name will be used to build a regex, so group declarations like `(A|B)` are possible
+function strip_anno(name) {
+    debug("→ @" name)
+    sub("^# @" name "[[:blank:]]?", "")
+    debug("→→ line with annotation stripped: [" $0 "]")
+}
+
+# @description Similar to `strip_anno`, but keeps the beginning of the line intact (#)
+function strip_anno_only(name) {
+    debug("→ @" name)
+    sub("@" name "[[:blank:]]?", "")
+    debug("→→ line with annotation stripped: [" $0 "]")
 }
 
 {
@@ -712,8 +706,7 @@ match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
 }
 
 /^# @(name|file)/ {
-    debug("→ @name|@file")
-    sub(/^# @(name|file)[[:space:]]*/, "")
+    strip_anno("(name|@file)")
     file_intro_enabled = 1
     file_title = trim($0)
     in_file_block = 1
@@ -722,21 +715,19 @@ match($0, /^#([[:space:]]+)@.*/, trimmed_spaces) {
 }
 
 /^# @brief/ {
-    debug("→ @brief")
-    sub(/^# @brief /, "")
+    strip_anno("brief")
     file_brief = trim($0)
 
     next
 }
 
 /^# @description/ {
-    debug("→ @description")
+    strip_anno_only("description")
     in_description = 1
     in_example = 0
 
     handle_description()
 
-    sub(/@description/, "")
     reset()
 }
 
@@ -774,8 +765,7 @@ in_description {
 }
 
 /^# @section/ {
-  debug("→ @section")
-  sub(/^# @section /, "")
+  strip_anno("section")
   if (internal_section){
       internal_section = 0
   }
@@ -804,22 +794,14 @@ in_example {
         docblock_concat("example", $0)
         next
     }
-
 }
 
 # Select @option lines with content.
 /^# @option[[:blank:]]+[^[:blank:]]/ {
-    debug("→ @option")
-    option_text = $0
-
-    # Remove '# @option ' tag.
-    sub(/^# @option[[:blank:]]+/, "", option_text)
-
-    # Trim text.
-    option_text = trim(option_text)
+    strip_anno("option")
 
     # Process @option text.
-    process_at_option(option_text)
+    process_at_option(trim($0))
 
     # Stop processing current line, and process next line.
     next
@@ -827,21 +809,16 @@ in_example {
 
 # Select @arg lines with content.
 /^# @arg[[:blank:]]+[^[:blank:]]/ {
-    debug("→ @arg")
-
-    arg_text = $0
-
-    # Remove '# @arg ' tag.
-    sub(/^# @arg[[:blank:]]+/, "", arg_text)
+    strip_anno("arg")
 
     # Trim text.
-    arg_text = trim(arg_text)
+    arg_text = trim($0)
 
     # Test if @arg is a numbered item (or $@).
     if(match(arg_text, /^\$([0-9]+|@)[[:space:]]/, contents)) {
         # Fetch matched values.
         arg_number = contents[1]
-        
+
         debug(" → → found arg $" arg_number)
 
         # Zero pad argument number for sorting.
@@ -887,9 +864,7 @@ match($0, /^# @(set|exitcode|see)[[:blank:]]+(.*)/, matched_annotation) {
 }
 
 /^# @deprecated/ {
-    debug("→ @deprecated")
-    sub(/[[:space:]]*# @deprecated /, "")
-
+    strip_anno("deprecated")
     deprecated = trim($0)
 
     next
@@ -903,15 +878,12 @@ multiple_line_docblock_name {
     if ($0 ~ multiple_line_identation_regex) {
         debug("→ @" multiple_line_docblock_name " - new line")
 
-        # Current line has the same indentation as the stderr section.
-        # Remove indentation and trailing spaces.
+        # Trim down the - possibly indented - line
         sub(/^#[[:space:]]+/, "")
         sub(/[[:space:]]+$/, "")
 
         # Push matched message to corresponding docblock.
         docblock_append(multiple_line_docblock_name, "\n" $0)
-
-        # Stop processing current line, and process next line.
         next
     } else {
         # End previous line docblock item.
@@ -922,7 +894,6 @@ multiple_line_docblock_name {
 # Process similarly @stdin, @stdout, @stderr and @requires entries.
 # Allow for multiple lines entries.
 match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.+)$/, contents) {
-    # Fetch matched values.
     docblock_name = contents[1]
     text = trim(contents[2])
 
@@ -940,47 +911,51 @@ match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.+)$/, contents) {
     next
 }
 
-# If docblock if not empty, and description is set,
-# and if this is not an example,
-# this regex matches:
-# - `function function_name () {`
-# - `function_name () {`
-# - `function_name {`
-/^[[:blank:]]*(function[[:blank:]]+)?([a-zA-Z0-9_\-:-\\.]+)[[:blank:]]*(\([[:blank:]]*\))?[[:blank:]]*[({]/ \
-{
-    process_function($0)
-    function_declaration_complete = 1
+# ----- START: none-comment evaluations ----- #
+
+/^[[:blank:]]+[^#]/ {
+  sub(/^[[:blank:]]+/, "")
+  # normalize spaces - this strips tabs for readability of patterns against code lines below
+  gensub(/[[:blank:]]+/, " ", "G")
 }
 
-# If line look like a function declaration but is missing opening bracket,
-/^[[:blank:]]*(function[[:blank:]]+)?([a-zA-Z0-9_\-:-\\.]+)[[:blank:]]*(\([[:blank:]]*\))?/ \
-    && !function_declaration_complete {
-    # store it for future use
-    debug("→ look like a function declaration, store line")
-    function_declaration = $0
-    next
+# either a line in the form 'name()' or 'function name ...
+# store name as candidate and trim down current line to simplify check for opening brace
+# The function name is matched very permissive. Valid function names vary by shell,
+# so the only reliable criteria is: NOT space and NOT '(' nor '{' as those are syntax elements.
+# This _may_ lead to false positives when ppl use other syntax characters in function names,
+# but these wouldn't lead to working code either way and `shdoc` is not `shellcheck`.
+match($0, /^([^{}() ]+)([ ]*\(\)[ ]*)(.*)/, function_nkw_cand) \
+|| match ($0, /^function[ ]+([^{}() ]+)([ ]*\(\)[ ]*)?(.*)/, function_kw_cand) {
+    if(isarray(function_nkw_cand) && function_nkw_cand[1] != "") {
+        function_declaration = function_nkw_cand[1]
+        line_rest = function_nkw_cand[3]
+    } else if (isarray(function_kw_cand) && function_kw_cand[1] != "") {
+        function_declaration = function_kw_cand[1]
+        line_rest = function_kw_cand[3]
+    }
+    debug("→ Found candidate for function declaration: " function_declaration)
+
+    # manipulate the current line to simplify the rules trying to find opening braces
+    sub(/.*/, line_rest)
+    # Strip dangling in-line comments to simplify subsequent matches. Note: blank BEFORE # is vital.
+    # e.g. bash recognizes 'some#name' as valid function name and '{#' is a syntax error.
+    sub(/[ ]+#.*/, "")
+    if (! match($0, /^[ ]*[{(].*/)) {
+        next
+    }
 }
 
-# Handle lone opening bracket if previous line is a function declaration.
-/^[[:blank:]]*[({]/ \
-    && function_declaration != "" {
-    debug("→ multi-line function declaration.")
-    # Process function declaration.
+# Check if the line confirms a previously detected function candidate (= has opening bracket/brace)
+/^[ ]*[({].*/ && function_declaration != "" {
+    debug("→ found opening bracket")
     process_function(function_declaration)
-}
-
-# Skip empty lines (allow for break in comment),
-# if function_declaration is not empty (i.e. waiting for an opening bracket).
-/^[[:blank:]]*$/ \
-    && function_declaration != "" {
-    debug("→ waiting for opening bracket.")
-    next
 }
 
 # Handle non comment lines.
 /^[^#]*$/ {
     debug("→ break")
-    
+
     if(file_intro_enabled && in_file_block && isarray(docblock) && length(docblock)){
         # support a subset of additional annotations for @file sections.
         debug("handle file docblock")
@@ -992,8 +967,8 @@ match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.+)$/, contents) {
         delete docblock_filter
     }
 
-    # Line is not an opening bracket,
-    # this is not a function declaration.
+    # It's a none-comment line that wasn't picked up by another rule above,
+    # so we have to cancel ongoing multi-line detections and close the currently active block
     function_declaration = ""
     function_declaration_complete = 0
     in_file_block = 0
@@ -1002,10 +977,7 @@ match($0, /^# @(stdin|stdout|stderr|requires)[[:blank:]]+(.+)$/, contents) {
     handle_description();
     process_section();
 
-    # Reset docblock.
     reset()
-
-    # Skip current line.
     next
 }
 
@@ -1034,7 +1006,7 @@ END {
             print render("h2", "Overview")
             print file_description "\n"
         }
-        
+
         if (file_annoblock != "") {
             print file_annoblock
         }
